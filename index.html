@@ -39,11 +39,11 @@
 										图标
 									</a>
 								</li>
-<!-- 								<li class="mui-table-view-cell">
-									<a class="mui-navigate-right" id="clearCache">
-										清除缓存
+								<li class="mui-table-view-cell">
+									<a class="mui-navigate-right" href="htmls/setting.html">
+										设置
 									</a>
-								</li> -->
+								</li>
 							</ul>
 						</div>
 					</div>
@@ -148,8 +148,8 @@
 				var w = document.querySelector("#ul_bills").offsetWidth;
 				var h = document.querySelector("#ul_bills").offsetHeight;
 
-				//console.log('w:' + w);
-				//console.log('h:' + h);
+				console.log('w:' + w);
+				console.log('h:' + h);
 				var img = convertCanvasToImage(canvas, h, w);
 				var dataUrl = img.src;
 				//console.log(dataUrl);
@@ -233,15 +233,6 @@
 			setTimeout(function() {
 				mui('.mui-off-canvas-wrap').offCanvas('close');
 			}, 1000);
-		})
-
-		//clearCache
-		document.getElementById('clearCache').addEventListener('tap', function() {
-			mui.confirm('确定要清除缓存吗', '提示', ['取消', '确认'], function(e) {
-				if (e.index == 1) {
-					plus.storage.clear();
-				}
-			}, 'div')
 		})
 	})
 </script>
