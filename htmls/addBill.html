@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../css/mui.css" rel="stylesheet" />
+		<script src="../js/mui.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../js/myStroage.js" type="text/javascript" charset="utf-8"></script>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">新建账单</h1>
+		</header>
+		<div class="mui-content">
+			<form class="mui-input-group">
+				<div class="mui-input-row">
+					<label>档口号</label>
+					<input id="addr" type="text" class="mui-input-clear" placeholder="档口名称">
+				</div>
+
+				<div class="mui-input-row">
+					<label>款号-名称</label>
+					<input id="name" type="text" class="mui-input-clear" placeholder="请输入商品名称">
+				</div>
+
+				<div class="mui-input-row">
+					<label>单价</label>
+					<input id="price" type="number" class="mui-input-clear" placeholder="请输入商品单价">
+				</div>
+
+				<div class="mui-input-row">
+					<label>数量</label>
+					<input id="num" type="number" class="mui-input-clear" placeholder="请输入款号和名称">
+				</div>
+
+			</form>
+			<button type="button" class="mui-btn mui-btn-blue mui-btn-block" id="btnAddContinue">继续添加款号</button>
+			<button type="button" class="mui-btn mui-btn-green mui-btn-block" id="btnSave">保存并返回</button>
+		</div>
+	</body>
+
+</html>
+<script type="text/javascript">
+	mui.init()
+
+	var strDate = new Date().toLocaleDateString();
+	mui.plusReady(function() {
+		mui('.mui-title')[0].innerHTML = mui('.mui-title')[0].innerHTML + "(" + strDate + ")"
+
+		document.getElementById('btnSave').addEventListener('tap', function() {
+			var billData = getBillData();
+			SaveBillDate(billData);
+			mui.toast('添加成功');
+			plus.webview.currentWebview().opener().reload();
+			setTimeout(function() {
+				plus.webview.currentWebview().close();
+			}, 1000);
+		})
+
+		document.getElementById('btnAddContinue').addEventListener('tap', function() {
+			console.log('继续添加');
+		})
+	})
+
+	//(addr, name, pirce, num, amount, date)
+	function getBillData() {
+		var addr = document.getElementById('addr').value;
+		var name = document.getElementById('name').value;
+		var price = document.getElementById('price').value;
+		var num = document.getElementById('num').value;
+		var amount = num * price;
+		var b = new bill(addr, name, price, num, amount, strDate);
+		console.log(JSON.stringify(b));
+		return b;
+	}
+</script>

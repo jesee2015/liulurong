@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../css/mui.css" rel="stylesheet" />
+		<script src="../js/mui.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../js/vue.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../js/myStroage.js" type="text/javascript" charset="utf-8"></script>
+	</head>
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">账单列表</h1>
+		</header>
+		<div class="mui-content">
+			<div class="mui-scroll-wrapper" style="padding-top: 50px;">
+				<div class="mui-scroll">
+					<div id="dv_bills">
+						<ul class="mui-table-view">
+							<li class="mui-table-view-cell" v-for="(item,index) in bills">
+
+								<div class="mui-slider-right mui-disabled">
+									<a class="mui-btn mui-btn-red" v-on:tap="deleItem(item,$event)">删除</a>
+								</div>
+								<div class="mui-slider-handle">
+									<div class="mui-pull-left" style="margin-right: 7px">
+										<h2 style="color: #6D6D72;">{{index+1}}</h2>
+									</div>
+									<div class="mui-pull-left" style="border-left: 1px dashed #000000; padding-left: 5px;">
+										<h5>款号-名称：{{item.name}}</h5>
+										<p>档口号：{{item.addr}}</p>
+										<p>{{item.num}}件*{{item.price}}元={{item.amount}}元</p>
+									</div>
+								</div>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</body>
+
+</html>
+<script type="text/javascript">
+	mui.init()
+	mui('.mui-scroll-wrapper').scroll({
+		deceleration: 0.0005 //flick 减速系数，系数越大，滚动速度越慢，滚动距离越小，默认值0.0006
+	});
+
+	mui.plusReady(function() {
+		var billsData = getBills();
+		console.log(JSON.stringify(billsData));
+
+		var v_bills = new Vue({
+			el: '#dv_bills',
+			data: {
+				'bills': billsData
+			}
+		})
+	})
+</script>

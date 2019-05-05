@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="js/mui.min.js"></script>
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<script src="js/myStroage.js" type="text/javascript" charset="utf-8"></script>
+		<script src="js/vue.js" type="text/javascript" charset="utf-8"></script>
+		<script src="js/myUtils.js" type="text/javascript" charset="utf-8"></script>
+		<script src="js/html2canvas.js" type="text/javascript" charset="utf-8"></script>
+		<script src="js/canvas2image.js" type="text/javascript" charset="utf-8"></script>
+	</head>
+	<body>
+		<!-- 主界面菜单同时移动 -->
+		<!-- 侧滑导航根容器 -->
+		<div class="mui-off-canvas-wrap mui-draggable">
+			<!-- 主页面容器 -->
+			<div class="mui-inner-wrap">
+				<!-- 菜单容器 -->
+				<aside class="mui-off-canvas-left" id="offCanvasSide">
+					<div class="mui-scroll-wrapper">
+						<div class="mui-scroll">
+							<!-- 菜单具体展示内容 -->
+							<ul class="mui-table-view">
+								<li class="mui-table-view-cell">
+									<a class="mui-navigate-right" href="htmls/addBill.html">
+										新建账单
+									</a>
+								</li>
+								<li class="mui-table-view-cell">
+									<a class="mui-navigate-right" href="htmls/billsList.html">
+										账单列表
+									</a>
+								</li>
+								<li class="mui-table-view-cell">
+									<a class="mui-navigate-right" href="htmls/charts.html">
+										图标
+									</a>
+								</li>
+<!-- 								<li class="mui-table-view-cell">
+									<a class="mui-navigate-right" id="clearCache">
+										清除缓存
+									</a>
+								</li> -->
+							</ul>
+						</div>
+					</div>
+				</aside>
+				<!-- 主页面标题 -->
+				<header class="mui-bar mui-bar-nav">
+					<a class="mui-icon mui-action-menu mui-icon-bars mui-pull-left" href="#offCanvasSide"></a>
+					<h1 class="mui-title">今天的账单</h1>
+				</header>
+				<!-- 主页面内容容器 -->
+				<div class="mui-content mui-scroll-wrapper">
+					<div class="mui-scroll">
+						<div id="ul_bills">
+							<div id="dv_totle" style="background-color: #FFFFFF;padding: 5px 10px;">
+								<h4>合计：{{totleNum}}件，{{amount}}元</h4>
+								<p>日期：{{billDate}}</p>
+							</div>
+							<!-- 主界面具体展示内容 -->
+							<ul class="mui-table-view">
+								<li class="mui-table-view-cell" v-for="(item,index) in bills">
+
+									<div class="mui-slider-right mui-disabled">
+										<a class="mui-btn mui-btn-red" v-on:tap="deleItem(item,$event)">删除</a>
+									</div>
+									<div class="mui-slider-handle">
+										<div class="mui-pull-left" style="margin-right: 7px;padding-top: 10px;">
+											<h2 style="color: #6D6D72;">{{index+1}}</h2>
+										</div>
+										<div class="mui-pull-left" style="border-left: 1px dashed #000000; padding-left: 5px;">
+											<h5>款号-名称：{{item.name}}</h5>
+											<p>档口号：{{item.addr}}</p>
+											<p>{{item.num}}件*{{item.price}}元={{item.amount}}元</p>
+										</div>
+									</div>
+								</li>
+							</ul>
+						</div>
+						<div id="footer" style="padding: 10px 0;">
+							<button id="capture" type="button" class="mui-btn mui-btn-blue mui-btn-block">账单截图</button>
+						</div>
+					</div>
+				</div>
+				<div class="mui-off-canvas-backdrop"></div>
+			</div>
+		</div>
+	</body>
+</html>
+<script type="text/javascript" charset="utf-8">
+	mui.init();
+	initDate(); //初始化数据
+	mui('.mui-scroll-wrapper').scroll({
+		deceleration: 0.0005 //flick 减速系数，系数越大，滚动速度越慢，滚动距离越小，默认值0.0006
+	});
+	var date = new Date().toLocaleDateString();
+
+	// 从canvas提取图片image   
+	function convertCanvasToImage(canvas, h, w) {
+		//新Image对象,可以理解为DOM;
+		var image = new Image();
+		image.height = h;
+		image.width = w;
+		//canvas.toDataURL返回的是一串Base64编码的URL,当然,浏览器自己肯定支持
+		//指定格式PNG
+		image.src = canvas.toDataURL("image/png");
+		return image;
+	}
+
+	// 保存图片到相册中 
+	function savePicture(dataUrl) {
+		var b = new plus.nativeObj.Bitmap('bitblmap');
+		plus.nativeUI.closeWaiting();
+		b.loadBase64Data(dataUrl, function() {
+			//保存到手机的文件名
+			var fileName = "untitled.png";
+			/*这里一定要是_doc目录*/
+			b.save("_doc/" + fileName, {
+				overwrite: true
+			}, function(object) {
+				//保存到相册
+				plus.gallery.save("_doc/" + fileName, function() {
+					mui.toast("图片已保存到相册");
+				}, function() {
+					mui.toast("图片保存失败");
+				});
+			}, function() {
+				mui.toast("图片保存失败");
+			});
+		}, function() {
+			mui.toast("图片保存失败");
+		});
+	}
+	mui.plusReady(function() {
+		//截图
+		document.getElementById('capture').addEventListener('tap', function() {
+			plus.nativeUI.showWaiting('截图中，请稍等...');
+			html2canvas(document.querySelector("#ul_bills"), {
+				scale: 2,
+				logging: false
+			}).then(canvas => {
+				//downLoadImage(canvas,'JoJo')
+				//mui.toast('截图成功');
+				var w = document.querySelector("#ul_bills").offsetWidth;
+				var h = document.querySelector("#ul_bills").offsetHeight;
+
+				//console.log('w:' + w);
+				//console.log('h:' + h);
+				var img = convertCanvasToImage(canvas, h, w);
+				var dataUrl = img.src;
+				//console.log(dataUrl);
+				savePicture(dataUrl)
+				//document.getElementById('ul_bills').appendChild(img)
+			});
+			// var share = null;
+			// sweixin = null;
+			// plus.share.getServices(function(s) {
+			// 	shares = {};
+			// 	console.log(JSON.stringify(s));
+			// 	for (var i in s) {
+			// 		var t = s[i];
+			// 		//console.log(JSON.stringify(t));
+			// 		shares[t.id] = t;
+			// 		//console.log(t.id);
+			// 	}
+			// 	sweixin = shares['weixin'];
+			// 	shareWeixinMessage();
+			// }, function(e) {
+			// 	console.log("获取分享服务列表失败：" + e.message);
+			// });
+		})
+		/**
+		 * 分享操作
+		 * @param {plus.share.ShareService} s
+		 */
+		function shareWeixinMessage() {
+			sweixin.send({
+				type: 'image',
+				pictures: ["_www/superMan.jpg"],
+				extra: {
+					scene: "WXSceneSession"
+				}
+			}, function() {
+				mui.toast("分享成功！");
+			}, function(e) {
+				mui.toast("分享失败：" + e.message);
+			});
+		}
+
+		//console.log(JSON.stringify(getBills()));
+		var billsArr = getBillsByDate(date)
+		var appBills = new Vue({
+			el: '#ul_bills',
+			data: {
+				bills: billsArr,
+				totleNum: getTotleNum(billsArr),
+				amount: getAmount(billsArr),
+				billDate: date
+			},
+			methods: {
+				deleItem: function(item, elem) {
+					var element = elem.srcElement;
+					var li = element.parentNode.parentNode;
+					mui.confirm('确定要删除吗？', '提示', ['取消', '确认'], function(e) {
+						if (1 == e.index) {
+							var itemIndex = billsArr.indexOf(item);
+							billsArr.splice(itemIndex, 1);
+							//本地存储删除数据
+							removeBillDate(item);
+							appBills.$data.totleNum = getTotleNum(billsArr);
+							appBills.$data.amount = getAmount(billsArr);
+							mui.swipeoutClose(li);
+						} else {
+							mui.swipeoutClose(li);
+						}
+					}, 'div')
+				}
+			}
+		})
+
+
+		mui('.mui-table-view').on('tap', 'a', function() {
+			var strHref = this.getAttribute('href');
+			if (strHref == null || strHref == undefined) {
+				return;
+			}
+			mui.openWindow(strHref, strHref);
+
+			setTimeout(function() {
+				mui('.mui-off-canvas-wrap').offCanvas('close');
+			}, 1000);
+		})
+
+		//clearCache
+		document.getElementById('clearCache').addEventListener('tap', function() {
+			mui.confirm('确定要清除缓存吗', '提示', ['取消', '确认'], function(e) {
+				if (e.index == 1) {
+					plus.storage.clear();
+				}
+			}, 'div')
+		})
+	})
+</script>
