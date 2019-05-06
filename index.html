@@ -36,11 +36,11 @@
 								</li>
 								<li class="mui-table-view-cell">
 									<a class="mui-navigate-right" href="htmls/charts.html">
-										图标
+										统计图表
 									</a>
 								</li>
 								<li class="mui-table-view-cell">
-									<a class="mui-navigate-right" href="htmls/setting.html">
+									<a class="mui-navigate-right" href="htmls/settings.html">
 										设置
 									</a>
 								</li>
@@ -59,7 +59,7 @@
 						<div id="ul_bills">
 							<div id="dv_totle" style="background-color: #FFFFFF;padding: 5px 10px;">
 								<h4>合计：{{totleNum}}件，{{amount}}元</h4>
-								<p>日期：{{billDate}}</p>
+								<p>剩余金额{{balance}}元，日期：{{billDate}}</p>
 							</div>
 							<!-- 主界面具体展示内容 -->
 							<ul class="mui-table-view">
@@ -73,9 +73,9 @@
 											<h2 style="color: #6D6D72;">{{index+1}}</h2>
 										</div>
 										<div class="mui-pull-left" style="border-left: 1px dashed #000000; padding-left: 5px;">
-											<h5>款号-名称：{{item.name}}</h5>
-											<p>档口号：{{item.addr}}</p>
-											<p>{{item.num}}件*{{item.price}}元={{item.amount}}元</p>
+											<p>市场：{{item.market}} {{item.addr}}</p>
+											<p>款号-名称：{{item.name}}</p>
+											<p style="font-size: 16px;color: #000000;">{{item.num}}件*{{item.price}}元={{item.amount}}元</p>
 										</div>
 									</div>
 								</li>
@@ -92,11 +92,20 @@
 	</body>
 </html>
 <script type="text/javascript" charset="utf-8">
+	window.addEventListener('refresh', function(e) {
+		// location.reload();
+		if (e.detail.action == 'editBalance') {
+			location.reload();
+		}else{
+			console.log('do nothing');
+		}
+	});
 	mui.init();
 	initDate(); //初始化数据
 	mui('.mui-scroll-wrapper').scroll({
 		deceleration: 0.0005 //flick 减速系数，系数越大，滚动速度越慢，滚动距离越小，默认值0.0006
 	});
+
 	var date = new Date().toLocaleDateString();
 
 	// 从canvas提取图片image   
@@ -199,6 +208,7 @@
 				bills: billsArr,
 				totleNum: getTotleNum(billsArr),
 				amount: getAmount(billsArr),
+				balance: getBalance(),
 				billDate: date
 			},
 			methods: {
@@ -213,6 +223,7 @@
 							removeBillDate(item);
 							appBills.$data.totleNum = getTotleNum(billsArr);
 							appBills.$data.amount = getAmount(billsArr);
+							appBills.$data.balance=getBalance();
 							mui.swipeoutClose(li);
 						} else {
 							mui.swipeoutClose(li);
@@ -232,7 +243,7 @@
 
 			setTimeout(function() {
 				mui('.mui-off-canvas-wrap').offCanvas('close');
-			}, 1000);
+			}, 500);
 		})
 	})
 </script>

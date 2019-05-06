@@ -6,8 +6,13 @@
 		<title></title>
 		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
 		<link href="../css/mui.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="../css/mui.picker.css" />
+		<link rel="stylesheet" type="text/css" href="../css/mui.poppicker.css" />
 		<script src="../js/mui.js" type="text/javascript" charset="utf-8"></script>
 		<script src="../js/myStroage.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../js/mui.picker.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../js/mui.poppicker.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../js/vue.js" type="text/javascript" charset="utf-8"></script>
 	</head>
 
 	<body>
@@ -16,14 +21,18 @@
 			<h1 class="mui-title">新建账单</h1>
 		</header>
 		<div class="mui-content">
+			<div id="dvBalance">
+				<button id='showMarketPicker' class="mui-btn mui-btn-block" type='button'>服装市场 - [南城]</button>
+				<p style="padding:0 10px;">剩余金额:{{msg}}</p>
+			</div>
 			<form class="mui-input-group">
 				<div class="mui-input-row">
 					<label>档口号</label>
-					<input id="addr" type="text" class="mui-input-clear" placeholder="档口名称">
+					<input id="addr" type="number" class="mui-input-clear" placeholder="档口名称">
 				</div>
 
 				<div class="mui-input-row">
-					<label>款号-名称</label>
+					<label>名称-款号</label>
 					<input id="name" type="text" class="mui-input-clear" placeholder="请输入商品名称">
 				</div>
 
@@ -38,31 +47,75 @@
 				</div>
 
 			</form>
-			<button type="button" class="mui-btn mui-btn-blue mui-btn-block" id="btnAddContinue">继续添加款号</button>
-			<button type="button" class="mui-btn mui-btn-green mui-btn-block" id="btnSave">保存并返回</button>
+			<button type="button" class="mui-btn mui-btn-blue mui-btn-block" id="btnAddContinue">继续添加【同档口】</button>
+			<button type="button" class="mui-btn mui-btn-green mui-btn-block" id="btnSave">继续添加【不同档口】</button>
 		</div>
 	</body>
 
 </html>
 <script type="text/javascript">
-	mui.init()
-
+	mui.init({
+		beforeback: function() {
+			var parentView = plus.webview.currentWebview().opener();
+			mui.fire(parentView, 'refresh',{'action':'editBalance'});
+			return true;
+		}
+	});
 	var strDate = new Date().toLocaleDateString();
+	var market = '南城';
+	var balance = 0;
 	mui.plusReady(function() {
+		balance = getBalance();
+		var vBalance = new Vue({
+			el: '#dvBalance',
+			data: {
+				msg: balance
+			}
+		})
+		var billData = null;
 		mui('.mui-title')[0].innerHTML = mui('.mui-title')[0].innerHTML + "(" + strDate + ")"
 
 		document.getElementById('btnSave').addEventListener('tap', function() {
-			var billData = getBillData();
+			billData = getBillData();
 			SaveBillDate(billData);
-			mui.toast('添加成功');
-			plus.webview.currentWebview().opener().reload();
-			setTimeout(function() {
-				plus.webview.currentWebview().close();
-			}, 1000);
+			vBalance.$data.msg = getBalance();
+			//清空表单信息
+			document.getElementById('addr').value = '';
+			document.getElementById('name').value = '';
+			document.getElementById('price').value = '';
+			document.getElementById('num').value = '';
+			mui.toast('添加成功，请继续添加！');
 		})
 
 		document.getElementById('btnAddContinue').addEventListener('tap', function() {
-			console.log('继续添加');
+			billData = getBillData();
+			SaveBillDate(billData);
+			vBalance.$data.msg = getBalance();
+			//清空表单信息
+			document.getElementById('name').value = '';
+			document.getElementById('price').value = '';
+			document.getElementById('num').value = '';
+			mui.toast('添加成功，请继续添加！');
+		})
+
+		//弹出选择框
+		document.getElementById('showMarketPicker').addEventListener('tap', function() {
+			var btnSelect = this;
+			var marketPicker = new mui.PopPicker();
+			marketPicker.setData([{
+					value: 'nc',
+					text: '南城'
+				},
+				{
+					value: 'wj',
+					text: '万佳'
+				}
+			]);
+			marketPicker.show(function(seleItem) {
+				console.log(seleItem[0].value);
+				btnSelect.innerText = "服装市场 - [" + seleItem[0].text + "]";
+				market = seleItem[0].text;
+			})
 		})
 	})
 
@@ -73,8 +126,8 @@
 		var price = document.getElementById('price').value;
 		var num = document.getElementById('num').value;
 		var amount = num * price;
-		var b = new bill(addr, name, price, num, amount, strDate);
-		console.log(JSON.stringify(b));
+		var b = new bill(market, addr, name, price, num, amount, strDate);
+		//console.log(JSON.stringify(b));
 		return b;
 	}
 </script>

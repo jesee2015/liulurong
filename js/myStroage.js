@@ -1,4 +1,5 @@
-function bill(addr, name, price, num, amount, date) {
+function bill(market, addr, name, price, num, amount, date) {
+	this.market = market;
 	this.addr = addr;
 	this.name = name;
 	this.price = price;
@@ -30,13 +31,20 @@ function getMarkets() {
 	return JSON.parse(strMarkets);
 }
 
+function getBalance() {
+	var balance = plus.storage.getItem('balance');
+	if (balance == null) {
+		balance = 0;
+	}
+	console.log('from getBalance()：当前剩余' + balance);
+	return parseFloat(balance);
+}
+
 function getBillsByDate(date) {
 	var bills = getBills();
 	return bills.filter(c => {
-		// console.log('c.date:' + c.date);
-		// console.log('date:' + date);
 		return c.date == date;
-	})
+	});
 }
 
 function SaveBillDate(objBillData) {
@@ -44,6 +52,11 @@ function SaveBillDate(objBillData) {
 	bills.push(objBillData);
 	var strBills = JSON.stringify(bills);
 	plus.storage.setItem('bills', strBills);
+	//修改总金额
+	var balance = getBalance();
+	balance = balance - parseFloat(objBillData.amount);
+	plus.storage.setItem('balance', balance.toString());
+	console.log('from SaveBillDate: 打货后剩余' + getBalance());
 }
 
 function saveMarketData(objMarketData) {
@@ -60,6 +73,12 @@ function removeBillDate(objBillData) {
 	var newStrBillsData = JSON.stringify(billDatas);
 	plus.storage.removeItem('bills');
 	plus.storage.setItem('bills', newStrBillsData);
+	//修改总金额
+	console.log(JSON.stringify(objBillData));
+	var balance = getBalance();
+	balance = balance + parseFloat(objBillData.amount);
+	plus.storage.setItem('balance', balance.toString());
+	console.log('删除后剩余：' + getBalance());
 }
 
 function removeMarketDate(objMarketData) {

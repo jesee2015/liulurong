@@ -6,42 +6,78 @@
 		<title></title>
 		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
 		<link href="../css/mui.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="../css/mui.picker.all.css" />
 		<script src="../js/echarts.min.js" type="text/javascript" charset="utf-8"></script>
 		<script src="../js/mui.js"></script>
+		<script src="../js/mui.picker.all.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../js/myStroage.js" type="text/javascript" charset="utf-8"></script>
 	</head>
 
 	<body>
 		<header class="mui-bar mui-bar-nav">
 			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
-			<h1 class="mui-title">标题</h1>
+			<h1 class="mui-title">统计图表</h1>
 		</header>
-
-		<div id="container" style="width: 100%;height:500px;"></div>
+		<div class="mui-content">
+			<button id='dateSelect' class="mui-btn mui-btn-block" type='button'>请选择日期</button>
+			<div id="container" style="width: 100%;height:500px;"></div>
+		</div>
 	</body>
-
 </html>
 <script type="text/javascript">
 	mui.init({})
+
+	mui.plusReady(function() {
+		var bills = getBills();
+		var billsData = [];
+		console.log(bills.length);
+		//console.log(JSON.stringify(bills));
+		//初始化时间选择控件
+		document.getElementById('dateSelect').addEventListener('tap', function() {
+			var dtPicker = new mui.DtPicker({
+				"type": "month"
+			});
+			var btn = this;
+			var y = null;
+			var m = null;
+			dtPicker.show(function(selectItems) {
+				y = selectItems.y.text; //年份
+				m = selectItems.m.text; //月份 
+				btn.innerText = y + '年' + m + '月';
+
+				var selectDate = y + '/' + parseInt(m);
+				var len = selectDate.length;
+				//console.log(selectDate);
+				var res = bills.filter(c => {
+					return c.date.substring(0, len) == selectDate;
+				});
+				res.forEach(function(item,index,arr) {
+					console.log(JSON.stringify(item));
+				})
+			});
+		})
+	})
+	//图标功能
 	var dom = document.getElementById("container");
 	var myChart = echarts.init(dom);
 	var app = {};
 	option = null;
 	var option = {
-		title:{
-			text:'xxxxxxxxxxxxx'
+		title: {
+			text: 'xxxxxxxxxxxxx'
 		},
 		dataset: {
 			source: [
 				['score', 'amount', 'product'],
-				[89.3, 582, '1'],
-				[57.1, 754, '2'],
-				[74.4, 432, '3'],
-				[50.1, 155, '4'],
-				[89.7, 245, '5'],
-				[68.1, 746, '6'],
-				[19.6, 952, '7'],
-				[10.6, 152, '8'],
-				[32.7, 212, '9']
+				[0, 82, '1(82件)'],
+				[0, 54, '2'],
+				[0, 32, '3'],
+				[0, 55, '4'],
+				[0, 45, '5'],
+				[0, 46, '6'],
+				[0, 52, '7'],
+				[0, 52, '8'],
+				[0, 12, '9']
 			]
 		},
 		grid: {
