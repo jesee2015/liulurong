@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../css/mui.css" rel="stylesheet" />
+		<script src="../js/mui.js"></script>
+		<script src="../js/vue.js" type="text/javascript" charset="utf-8"></script>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">金额设置</h1>
+		</header>
+		<div class="mui-content" id="dvBalance">
+			<div style="margin-top: 8px;background-color: #FFFFFF; padding: 5px 0;">
+				<p>剩余金额</p>
+				<div class="mui-input-row">
+					<input disabled="disabled" id="numBalance" type="text" class="mui-input-clear" v-model="msg">
+				</div>
+			</div>
+
+			<div style="margin-top: 8px;background-color: #FFFFFF; padding: 5px 0;">
+				<p>增加金额</p>
+				<input id="numAdd" type="number" class="mui-input-clear" placeholder="请输入增加金额">
+				<button do='add' type="button" class="mui-btn mui-btn-green mui-btn-block" style="padding: 8px 0; margin: 5px 0;">确定</button>
+			</div>
+
+			<div style="margin-top: 8px;background-color: #FFFFFF; padding: 5px 0;">
+				<p>减少金额</p>
+				<input id='numSub' type="number" class="mui-input-clear" placeholder="请输入减少金额">
+				<button do='sub' type="button" class="mui-btn mui-btn-red mui-btn-block" style="padding: 8px 0; margin: 5px 0;">确定</button>
+			</div>
+
+		</div>
+		<div style="margin-top: 8px;background-color: #FFFFFF; padding: 5px 0;">
+			<button type="button" class="mui-btn mui-btn-yellow mui-btn-block" id="btnReset">重置金额</button>
+		</div>
+	</body>
+
+</html>
+<script type="text/javascript">
+	mui.init({
+		beforeback: function(e) {
+			var indexView = plus.webview.currentWebview().opener().opener();
+			mui.fire(indexView,'refresh',{'action':'editBalance'})
+		}
+	})
+	var balance = 0;
+	//console.log(plus.webview.currentWebview().opener().id);
+
+	mui.plusReady(function() {
+		//初始化剩余金额
+		balance = plus.storage.getItem('balance');
+		if (balance == null) {
+			plus.storage.setItem('balance', '0');
+			balance = 0;
+		}
+		var vBalance = new Vue({
+			el: '#dvBalance',
+			data: {
+				msg: balance
+			}
+		})
+
+		//增加减少金额
+		mui('.mui-content').on('tap', 'button', function() {
+			var action = this.getAttribute('do');
+			var num = this.parentNode.children[1].value;
+			if (action == 'add') {
+				balance = parseFloat(balance) + parseFloat(num);
+			} else {
+				balance = parseFloat(balance) - parseFloat(num);
+			}
+			mui.toast('修改成功：余额' + balance);
+			this.parentNode.children[1].value = '';
+			document.activeElement.blur();
+			plus.storage.setItem('balance', balance.toString());
+
+			//var b2 = plus.storage.getItem('balance');
+			vBalance.$data.msg = balance;
+			plus.webview.currentWebview().opener().opener().reload();
+		})
+
+		//重置金额
+		document.getElementById('btnReset').addEventListener('tap', function() {
+			mui.confirm('确定要重置金额吗？', '提示', ['取消', '确认'], function(e) {
+				if (e.index == 1) {
+					plus.storage.setItem('balance', '0');
+					balance = 0;
+					vBalance.$data.msg = balance;
+					plus.webview.currentWebview().opener().opener().reload();
+					mui.toast('初始金额：0')
+				} else {
+					mui.toast('你取消了重置！')
+				}
+			}, 'div')
+
+		})
+	})
+</script>
