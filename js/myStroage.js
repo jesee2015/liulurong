@@ -1,11 +1,14 @@
-function bill(market, addr, name, price, num, amount, date) {
-	this.market = market;
-	this.addr = addr;
-	this.name = name;
-	this.price = price;
-	this.num = num;
-	this.amount = price * num;
-	this.date = date;
+const LIULURONG = {
+	url: "http://47.112.204.22"
+	//url: "http://192.168.3.30:5000"
+}
+
+function bill(Market, Shop, ProductNoName, Price, ProductNumber) {
+	this.Market = Market;
+	this.Shop = Shop;
+	this.ProductNoName = ProductNoName;
+	this.Price = Price;
+	this.ProductNumber = ProductNumber;
 }
 
 function initDate() {
@@ -23,6 +26,7 @@ function initDate() {
 
 function getBills() {
 	var strBills = plus.storage.getItem('bills');
+	//console.log(strBills);
 	return JSON.parse(strBills);
 }
 

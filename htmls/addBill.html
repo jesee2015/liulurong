@@ -22,7 +22,7 @@
 		</header>
 		<div class="mui-content">
 			<div id="dvBalance">
-				<button id='showMarketPicker' class="mui-btn mui-btn-block" type='button'>服装市场 - [南城]</button>
+				<button id='showMarketPicker' class="mui-btn mui-btn-block" type='button'>南城</button>
 				<p style="padding:0 10px;">剩余金额:{{msg}}</p>
 			</div>
 			<form class="mui-input-group">
@@ -43,7 +43,7 @@
 
 				<div class="mui-input-row">
 					<label>数量</label>
-					<input id="num" type="number" class="mui-input-clear" placeholder="请输入款号和名称">
+					<input id="num" type="number" class="mui-input-clear" placeholder="请输入数量">
 				</div>
 
 			</form>
@@ -54,13 +54,7 @@
 
 </html>
 <script type="text/javascript">
-	mui.init({
-		beforeback: function() {
-			var parentView = plus.webview.currentWebview().opener();
-			mui.fire(parentView, 'refresh',{'action':'editBalance'});
-			return true;
-		}
-	});
+	mui.init({});
 	var strDate = new Date().toLocaleDateString();
 	var market = '南城';
 	var balance = 0;
@@ -75,28 +69,40 @@
 		var billData = null;
 		mui('.mui-title')[0].innerHTML = mui('.mui-title')[0].innerHTML + "(" + strDate + ")"
 
+		var url = LIULURONG.url + '/api/billitem';
+		//继续添加【不同档口】
 		document.getElementById('btnSave').addEventListener('tap', function() {
-			billData = getBillData();
-			SaveBillDate(billData);
-			vBalance.$data.msg = getBalance();
-			//清空表单信息
-			document.getElementById('addr').value = '';
-			document.getElementById('name').value = '';
-			document.getElementById('price').value = '';
-			document.getElementById('num').value = '';
-			mui.toast('添加成功，请继续添加！');
+			mui.post(url, getBillData(), function(data) {
+				//清空表单信息
+				document.getElementById('addr').value = '';
+				document.getElementById('name').value = '';
+				document.getElementById('price').value = '';
+				document.getElementById('num').value = '';
+				mui.toast('添加成功，请继续添加！');
+				reloadIndexView();
+			}, 'json');
 		})
 
+		//继续添加【同档口】
 		document.getElementById('btnAddContinue').addEventListener('tap', function() {
-			billData = getBillData();
-			SaveBillDate(billData);
-			vBalance.$data.msg = getBalance();
-			//清空表单信息
-			document.getElementById('name').value = '';
-			document.getElementById('price').value = '';
-			document.getElementById('num').value = '';
-			mui.toast('添加成功，请继续添加！');
+			mui.post(url, getBillData(), function(data) {
+				//清空表单信息
+				document.getElementById('name').value = '';
+				document.getElementById('price').value = '';
+				document.getElementById('num').value = '';
+				mui.toast('添加成功，请继续添加！');
+				reloadIndexView();
+			}, 'json');
 		})
+
+
+		function reloadIndexView() {
+			var parentView = plus.webview.currentWebview().opener();
+			mui.fire(parentView, 'refresh', {
+				'action': 'editBalance'
+			});
+			return true;
+		}
 
 		//弹出选择框
 		document.getElementById('showMarketPicker').addEventListener('tap', function() {
@@ -113,7 +119,7 @@
 			]);
 			marketPicker.show(function(seleItem) {
 				console.log(seleItem[0].value);
-				btnSelect.innerText = "服装市场 - [" + seleItem[0].text + "]";
+				btnSelect.innerText = seleItem[0].text;
 				market = seleItem[0].text;
 			})
 		})
@@ -121,13 +127,16 @@
 
 	//(addr, name, pirce, num, amount, date)
 	function getBillData() {
+		var market = document.getElementById('showMarketPicker').innerText;
+		var index = market.indexOf('-') + 1;
+		market = market.substr(index);
+
 		var addr = document.getElementById('addr').value;
 		var name = document.getElementById('name').value;
 		var price = document.getElementById('price').value;
 		var num = document.getElementById('num').value;
-		var amount = num * price;
-		var b = new bill(market, addr, name, price, num, amount, strDate);
-		//console.log(JSON.stringify(b));
+		var b = new bill(market, addr, name, price, num, );
+		console.log(JSON.stringify(b));
 		return b;
 	}
 </script>

@@ -6,149 +6,118 @@
 		<title></title>
 		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
 		<link href="../css/mui.css" rel="stylesheet" />
-		<link rel="stylesheet" type="text/css" href="../css/mui.picker.all.css" />
+		<link rel="stylesheet" type="text/css" href="../css/mui.picker.css" />
+		<link rel="stylesheet" type="text/css" href="../css/mui.poppicker.css" />
 		<script src="../js/echarts.min.js" type="text/javascript" charset="utf-8"></script>
 		<script src="../js/mui.js"></script>
 		<script src="../js/mui.picker.all.js" type="text/javascript" charset="utf-8"></script>
 		<script src="../js/myStroage.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../js/mui.picker.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../js/mui.poppicker.js" type="text/javascript" charset="utf-8"></script>
 	</head>
 
 	<body>
 		<header class="mui-bar mui-bar-nav">
 			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
-			<h1 class="mui-title">统计图表</h1>
+			<h1 class="mui-title" id="showDatePicker">选择日期</h1>
 		</header>
 		<div class="mui-content">
-			<button id='dateSelect' class="mui-btn mui-btn-block" type='button'>请选择日期</button>
-			<div id="container" style="width: 100%;height:500px;"></div>
+			<!-- <button id='dateSelect' class="mui-btn mui-btn-block" type='button'>请选择日期</button> -->
+			<div id="container" style="width: 100%;height:300px; margin: 15px 0;"></div>
 		</div>
 	</body>
 </html>
 <script type="text/javascript">
-	mui.init({})
-	mui.plusReady(function() {
-		var bills = getBills();
-		console.log(bills.length);
-		//console.log(JSON.stringify(bills));
-		//初始化时间选择控件
-		document.getElementById('dateSelect').addEventListener('tap', function() {
-			var dtPicker = new mui.DtPicker({
-				"type": "month"
-			});
-			var btn = this;
-			var y = null;
-			var m = null;
-			dtPicker.show(function(selectItems) {
-				y = selectItems.y.text; //年份
-				m = selectItems.m.text; //月份 
-				btn.innerText = y + '年' + m + '月';
+	var app = {};
+	app.title = "销量统计";
+	var option = {
+		title: {
+			text: '销量统计',
+			subtext: '数据来自曦哥的统计'
+		},
+		tooltip: {
+			trigger: 'axis',
+			axisPointer: {
+				type: 'shadow'
+			}
+		},
+		legend: {
+			data: ['1月']
+		},
+		grid: {
+			left: '3%',
+			right: '4%',
+			bottom: '3%',
+			containLabel: true
+		},
+		xAxis: {
+			type: 'value',
+			boundaryGap: [0, 0.01]
+		},
+		yAxis: {
+			type: 'category',
+			data: []
+		},
+		series: [{
+			name: '1月',
+			type: 'bar',
+			data: []
+		}]
+	};
 
-				var sourceData = [];
-				var selectDate = y + '/' + parseInt(m);
-				var len = selectDate.length;
-				//console.log(selectDate);
-				var res = bills.filter(c => {
-					return c.date.substring(0, len) == selectDate;
-				});
-				var gpArr = groupBy(res);
-				console.log(JSON.stringify(gpArr));
-				var arrTitle = ['score', 'amount', 'product'];
-				sourceData.push(arrTitle);
-				gpArr.forEach(function(bills) {
-					var newItem = [];
-					var amount = 0;
-					bills.item.forEach(function(bill) {
-						amount = amount + parseInt(bill.num);
-					});
-					var product = bills.date.toString() + '(' + amount + '件)';
-					newItem.push(0);
-					newItem.push(amount);
-					newItem.push(product);
-					sourceData.push(newItem);
-				});
-				showTuBiao(sourceData);
-				console.log(JSON.stringify(sourceData));
+	mui.plusReady(function() {
+		// 使用刚指定的配置项和数据显示图表。
+		var d = new Date();
+		var month = d.getMonth() + 1;
+		getByMonth(month);
+
+
+		var dDate = new Date();
+		dDate.setFullYear(dDate.getFullYear(), dDate.getMonth(), dDate.getDate());
+		//弹出选择框
+		document.getElementById('showDatePicker').addEventListener('tap', function() {
+			var btnSelect = this;
+			plus.nativeUI.pickDate(function(e) {
+				var d = e.date;
+				var dmonth = d.getMonth() + 1;
+				btnSelect.innerText = d.getFullYear() + "-" + dmonth + "-" + d.getDate();
+				//重新加载数据
+				getByMonth(dmonth);
+			}, function(e) {
+				btnSelect.innerText = "您没有选择日期";
+			}, {
+				title: "请选择日期",
+				date: dDate,
 			});
 		})
+
 	})
 
-	// source: [
-	// 			['score', 'amount', 'product'],
-	// 			[0, 82, '1(82件)'],
-	// 			[0, 54, '2'],
-	// 		]
-	function groupBy(arr) {
-		var map = {},
-			dest = [];
-		for (var i = 0; i < arr.length; i++) {
-			var ai = arr[i];
-			if (!map[ai.date]) {
-				dest.push({
-					date: ai.date,
-					item: [ai]
-				});
-				map[ai.date] = ai;
-			} else {
-				for (var j = 0; j < dest.length; j++) {
-					var dj = dest[j];
-					if (dj.date == ai.date) {
-						dj.item.push(ai);
-						break;
-					}
+	function getByMonth(month) {
+		var url_Analysis = LIULURONG.url + '/api/billitem/GetAnalysisByMonth';
+		mui.post(url_Analysis, {
+				'month': month
+			},
+			function(resp) {
+				var myChart = null;
+				// console.log(JSON.stringify(resp));
+				option.yAxis.data = resp.dates;
+				option.series[0].data = resp.nums;
+				option.legend.data[0] = month + "月";
+				option.series[0].name = month + "月";
+				document.getElementById('container').style.height = resp.nums.length * 22 + 100 + "px";
+				var totle = resp.totle;
+				option.title.subtext = "数据来自曦哥的统计" + month + "月份:合计" + totle + "件";
+				// console.log(JSON.stringify(option));
+				console.log(document.getElementById('container').style.height);
+				if (myChart != null) {
+					myChart.clear();
 				}
-			}
-		}
-		return dest;
-	}
+				myChart = echarts.init(document.getElementById('container'));
+				myChart.setOption(option, true);
+				myChart.resize();
+			}, 'json'
+		);
 
-	//图标功能
-	function showTuBiao(dataSource) {
-
-
-		var dom = document.getElementById("container");
-		var myChart = echarts.init(dom);
-		var app = {};
-		option = null;
-		var option = {
-			title: {
-				text: 'xxxxxxxxxxxxx'
-			},
-			dataset: {
-				source: dataSource
-			},
-			grid: {
-				containLabel: true
-			},
-			xAxis: {
-				name: 'amount'
-			},
-			yAxis: {
-				type: 'category'
-			},
-			visualMap: {
-				orient: 'horizontal',
-				left: 'center',
-				min: 10,
-				max: 500,
-				text: ['High Score', 'Low Score'],
-				// Map the score column to color
-				dimension: 0,
-				inRange: {
-					color: ['#D7DA8B', '#E15457']
-				}
-			},
-			series: [{
-				type: 'bar',
-				encode: {
-					// Map the "amount" column to X axis.
-					x: 'amount',
-					// Map the "product" column to Y axis
-					y: 'product'
-				}
-			}]
-		};;
-		if (option && typeof option === "object") {
-			myChart.setOption(option, true);
-		}
 	}
 </script>

@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../css/mui.css" rel="stylesheet" />
+		<script src="../js/mui.js"></script>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">设置</h1>
+		</header>
+		<div class="mui-content">
+			<ul class="mui-table-view">
+				<li class="mui-table-view-cell">
+					<a class="mui-navigate-right" href="markets.html">
+						添加市场
+					</a>
+				</li>
+				<li class="mui-table-view-cell" id="clearCache">
+					<a class="mui-navigate-right">
+						清除缓存
+					</a>
+				</li>
+			</ul>
+		</div>
+	</body>
+
+</html>
+<script type="text/javascript">
+	mui.init()
+	mui('.mui-table-view').on('tap', 'a', function() {
+		var strHref = this.getAttribute('href');
+		if (strHref == null || strHref == '')
+			return;
+		mui.openWindow(strHref);
+	})
+	//clearCache
+	document.getElementById('clearCache').addEventListener('tap', function() {
+		mui.confirm('确定要清除缓存吗', '提示', ['取消', '确认'], function(e) {
+			if (e.index == 1) {
+				plus.storage.clear();
+			}
+		}, 'div')
+	})
+</script>

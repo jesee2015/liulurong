@@ -6,9 +6,13 @@
 		<title></title>
 		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
 		<link href="../css/mui.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="../css/mui.picker.css" />
+		<link rel="stylesheet" type="text/css" href="../css/mui.poppicker.css" />
 		<script src="../js/mui.js" type="text/javascript" charset="utf-8"></script>
 		<script src="../js/vue.js" type="text/javascript" charset="utf-8"></script>
 		<script src="../js/myStroage.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../js/mui.picker.js" type="text/javascript" charset="utf-8"></script>
+		<script src="../js/mui.poppicker.js" type="text/javascript" charset="utf-8"></script>
 	</head>
 	<body>
 		<header class="mui-bar mui-bar-nav">
@@ -19,6 +23,10 @@
 			<div class="mui-scroll-wrapper" style="padding-top: 50px;">
 				<div class="mui-scroll">
 					<div id="dv_bills">
+						<div id="dv_search">
+							<button id='showDatePicker' class="mui-btn mui-btn-block" type='button'>请选择日期</button>
+						</div>
+
 						<ul class="mui-table-view">
 							<li class="mui-table-view-cell" v-for="(item,index) in bills">
 
@@ -26,13 +34,15 @@
 									<a class="mui-btn mui-btn-red" v-on:tap="deleItem(item,$event)">删除</a>
 								</div>
 								<div class="mui-slider-handle">
-									<div class="mui-pull-left" style="margin-right: 7px">
+									<div class="mui-pull-left" style="margin-right: 7px;padding-top: 10px;">
 										<h2 style="color: #6D6D72;">{{index+1}}</h2>
 									</div>
 									<div class="mui-pull-left" style="border-left: 1px dashed #000000; padding-left: 5px;">
-										<h5>款号-名称：{{item.name}}</h5>
-										<p>档口号：{{item.addr}}</p>
-										<p>{{item.num}}件*{{item.price}}元={{item.amount}}元</p>
+										<p>{{item.id}}</p>
+										<p>日期:{{item.creationDate}}</p>
+										<p>市场:{{item.market}} 档口号:{{item.shop}}</p>
+										<p>款号-名称:{{item.productNoName}}</p>
+										<p style="font-size: 16px;color: #000000;">{{item.productNumber}}件*{{item.price}}元={{item.productNumber * item.price}}元</p>
 									</div>
 								</div>
 							</li>
@@ -49,17 +59,63 @@
 	mui.init()
 	mui('.mui-scroll-wrapper').scroll({
 		deceleration: 0.0005 //flick 减速系数，系数越大，滚动速度越慢，滚动距离越小，默认值0.0006
-	});
+	})
 
 	mui.plusReady(function() {
-		var billsData = getBills();
-		console.log(JSON.stringify(billsData));
-
-		var v_bills = new Vue({
+		//初始化当天时间
+		var dDate = new Date();
+		dDate.setFullYear(dDate.getFullYear(), dDate.getMonth(), dDate.getDate());
+		document.getElementById('showDatePicker').innerText = dDate.getFullYear() + "-" + (dDate.getMonth() + 1) + "-" + dDate.getDate();
+		
+		console.log(dDate);
+		var billsData = {};
+		var appBills = new Vue({
 			el: '#dv_bills',
 			data: {
 				'bills': billsData
 			}
+		});
+
+		//初始化页面数据
+		function initData() {
+			var url = LIULURONG.url + '/api/billitem';
+			mui.get(url, {}, function(resp) {
+				appBills.bills = resp.billItems;
+			}, 'json');
+		}
+
+		function getDataByDate(datetime) {
+			plus.nativeUI.showWaiting();
+			var url = LIULURONG.url + '/api/billitem/GetbyDate';
+			console.log(datetime);
+			mui.get(url, {
+				"dateTime": datetime
+			}, function(resp) {
+				console.log(JSON.stringify(resp));
+				appBills.bills = resp.billItems;
+				plus.nativeUI.closeWaiting();
+			}, 'json');
+		}
+		initData();
+
+
+		//弹出选择框
+		document.getElementById('showDatePicker').addEventListener('tap', function() {
+			var btnSelect = this;
+
+			
+			plus.nativeUI.pickDate(function(e) {
+				var d = e.date;
+				btnSelect.innerText = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+				//重新加载数据
+
+				getDataByDate(d.toJSON());
+			}, function(e) {
+				btnSelect.innerText = "您没有选择日期";
+			}, {
+				title: "请选择日期",
+				date: dDate,
+			});
 		})
 	})
 </script>

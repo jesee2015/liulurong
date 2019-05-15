@@ -67,15 +67,17 @@
 
 									<div class="mui-slider-right mui-disabled">
 										<a class="mui-btn mui-btn-red" v-on:tap="deleItem(item,$event)">删除</a>
+										<a class="mui-btn mui-btn-green" v-on:tap="edit(item,$event)">编辑</a>
 									</div>
 									<div class="mui-slider-handle">
 										<div class="mui-pull-left" style="margin-right: 7px;padding-top: 10px;">
 											<h2 style="color: #6D6D72;">{{index+1}}</h2>
 										</div>
 										<div class="mui-pull-left" style="border-left: 1px dashed #000000; padding-left: 5px;">
-											<p>市场：{{item.market}} {{item.addr}}</p>
-											<p>款号-名称：{{item.name}}</p>
-											<p style="font-size: 16px;color: #000000;">{{item.num}}件*{{item.price}}元={{item.amount}}元</p>
+											<p>{{item.id}}</p>
+											<p>市场:{{item.market}} 档口号:{{item.shop}}</p>
+											<p>款号-名称:{{item.productNoName}}</p>
+											<p style="font-size: 16px;color: #000000;">{{item.productNumber}}件*{{item.price}}元={{item.productNumber * item.price}}元</p>
 										</div>
 									</div>
 								</li>
@@ -96,7 +98,7 @@
 		// location.reload();
 		if (e.detail.action == 'editBalance') {
 			location.reload();
-		}else{
+		} else {
 			console.log('do nothing');
 		}
 	});
@@ -165,21 +167,6 @@
 				savePicture(dataUrl)
 				//document.getElementById('ul_bills').appendChild(img)
 			});
-			// var share = null;
-			// sweixin = null;
-			// plus.share.getServices(function(s) {
-			// 	shares = {};
-			// 	console.log(JSON.stringify(s));
-			// 	for (var i in s) {
-			// 		var t = s[i];
-			// 		//console.log(JSON.stringify(t));
-			// 		shares[t.id] = t;
-			// 		//console.log(t.id);
-			// 	}
-			// 	sweixin = shares['weixin'];
-			// 	shareWeixinMessage();
-			// }, function(e) {
-			// 	console.log("获取分享服务列表失败：" + e.message);
 			// });
 		})
 		/**
@@ -201,14 +188,13 @@
 		}
 
 		//console.log(JSON.stringify(getBills()));
-		var billsArr = getBillsByDate(date)
 		var appBills = new Vue({
 			el: '#ul_bills',
 			data: {
-				bills: billsArr,
-				totleNum: getTotleNum(billsArr),
-				amount: getAmount(billsArr),
-				balance: getBalance(),
+				bills: [],
+				totleNum: 0,
+				amount: 0,
+				balance: 0,
 				billDate: date
 			},
 			methods: {
@@ -217,23 +203,51 @@
 					var li = element.parentNode.parentNode;
 					mui.confirm('确定要删除吗？', '提示', ['取消', '确认'], function(e) {
 						if (1 == e.index) {
-							var itemIndex = billsArr.indexOf(item);
-							billsArr.splice(itemIndex, 1);
-							//本地存储删除数据
-							removeBillDate(item);
-							appBills.$data.totleNum = getTotleNum(billsArr);
-							appBills.$data.amount = getAmount(billsArr);
-							appBills.$data.balance=getBalance();
+							var url_del = LIULURONG.url + '/api/billitem/delete'
+							mui.post(url_del, {
+								id: item.id
+							}, function(data) {
+								// var index = appBills.bills.indexOf(item);
+								// appBills.bills.splice(index, 1);
+								if (data.code == 200) {
+									initData();
+								} else {
+									mui.toast('服务器异常')
+								}
+							}, 'json');
 							mui.swipeoutClose(li);
 						} else {
 							mui.swipeoutClose(li);
 						}
 					}, 'div')
+				},
+				edit: function(item, elem) {
+					var element = elem.srcElement;
+					var li = element.parentNode.parentNode;
+					// console.log(JSON.stringify(item));
+					mui.openWindow('htmls/editBillItem.html', 'htmls/editBillItem.html', {
+						extras: {
+							billitem: item
+						}
+					})
+					mui.swipeoutClose(li);
 				}
 			}
 		})
 
+		//初始化页面数据
+		function initData() {
+			var url = LIULURONG.url + '/api/billitem/GetbyDate';
+			console.log(url);
+			mui.get(url, {"dateTime":date}, function(data) {
+				appBills.bills = data.billItems;
+				appBills.totleNum = data.totleNum;
+				appBills.amount = data.amount;
+			}, 'json');
+		}
+		initData();
 
+		//菜单跳转
 		mui('.mui-table-view').on('tap', 'a', function() {
 			var strHref = this.getAttribute('href');
 			if (strHref == null || strHref == undefined) {
